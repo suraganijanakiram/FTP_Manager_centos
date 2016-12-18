@@ -2,7 +2,7 @@
 #used to manage FTp in centos and redhat systems
 #email or comment suggestions and feedback to suraganijanakiram@gmail.com
 clear
-
+echo -e "\n\n\t \e[1;32m Make sure the selinux policy is disabled \e[0m \n"
 check_conf()
 
 {
@@ -44,6 +44,14 @@ else
         sed -i '/chroot_list_enable/s/^#//g' /etc/vsftpd/vsftpd.conf
 
         sed -i '/chroot_list_file/s/^#//g' /etc/vsftpd/vsftpd.conf
+
+        echo "dual_log_enable=YES" >> /etc/vsftpd/vsftpd.conf
+
+        echo "xferlog_file=/var/log/vsftpd.log" >> /etc/vsftpd/vsftpd.conf
+
+        echo "log_ftp_protocol=YES" >> /etc/vsftpd/vsftpd.conf
+
+        touch /var/log/vsftpd.log
 
                 if [ -f "/etc/vsftpd/chroot_list" ];
 
@@ -555,16 +563,13 @@ done
 
 }
 
-
 while :
 
 do
 
-echo -e "\n \e[1;32m choose any one option for ftp:- \e[0m \n\n  1\e[1;32m : \e[0mTo install package and configure \n\n  2\e[1;32m : \e[0mTo add user \n\n  3\e[1;32m : \e[0mTo chroot(Restrict ftp user to his home directory) existing user \n\n  4\e[1;32m : \e[0mTo remove chroot(Restrict ftp user to his home directory) for user \n\n  5\e[1;32m : \e[0mTo delete user \n\n  6\e[1;32m : \e[0mExit"
-
+        echo -e "\n \e[1;32m choose any one option for ftp:- \e[0m \n\n  1\e[1;32m : \e[0mTo install package and configure \n\n  2\e[1;32m : \e[0mTo add user \n\n  3\e[1;32m : \e[0mTo chroot(Restrict ftp user to his home directory) existing user \n\n  4\e[1;32m : \e[0mTo remove chroot(Restrict ftp user to his home directory) for user \n\n  5\e[1;32m : \e[0mTo delete user \n\n  6\e[1;32m : \e[0mTo see the FTP Login details \n\n  7\e[1;32m : \e[0mTo see the Failed FTP Login details \n\n  8\e[1;32m : \e[0mTo see the UPLOAD (or) EDIT and DOWNLOAD FTP activity log \n\n  9\e[1;32m : \e[0mTo see the DELETE FTP activity log \n\n  Q\e[1;32m : \e[0mExit"
 
 read -p "enter the option number : " OPT
-
 
 case $OPT in
 
@@ -579,7 +584,6 @@ case $OPT in
         check_conf
 
         addinguser
-
 
         ;;
 
@@ -626,6 +630,32 @@ case $OPT in
         ;;
 
   6)
+        echo -e "\n\t \e[1;32m FTP LOGIN DETAILS ARE:- \e[0m \n"
+
+        echo -e "TIME STAMP\t\t\tUSERNAME\tIPADDRESS" && tail -1000 /var/log/vsftpd.log | grep "Login successful" | awk  '{print $1,$2,$3,$4,$5,"\t"$8,"\t"$9,"\t"$12}' | tr -d '()[]{}",'
+
+        ;;
+
+  7)
+        echo -e "\n\t \e[1;32m FAILED FTP LOGIN DETAILS ARE:- \e[0m \n"
+
+        echo -e "TIME STAMP\t\t\tUSERNAME\tIPADDRESS" && tail -1000 /var/log/vsftpd.log | grep "Login incorrect" | awk  '{print $1,$2,$3,$4,$5,"\t"$8,"\t"$9,"\t"$12}' | tr -d '()[]{}",'
+
+        ;;
+
+  8)
+        echo -e "\n\t \e[1;32m FTP UPLOAD (or) EDIT and DOWNLOAD DETAILS ARE:- \e[0m \n\n\t \e[1;32m IN THE FOURTH FIELD: \e[0m \n\t \e[1;32m i ==> UPLOAD (or) EDITED \e[0m \n\t \e[1;32m o ==> DOWNLOAD \e[0m \n"
+
+        tail -1000 /var/log/vsftpd.log | grep "b _ o \| b _ i \|a _ o \|a _ i" | awk  '{print $1,$2,$3,$4,$5,"\t"$7,"\t"$9,"\t"$12,"\t"$14}' | tr -d '/'
+
+        ;;
+
+  9)
+        echo -e "\n\t \e[1;32m THE FTP DELETED FILE'S DETAILS ARE:- \e[0m \n"
+        tail -1000 /var/log/vsftpd.log | grep "OK DELETE:" | awk '{$6=$7=$9=$10=$11=""; print $0}' | tr -d '/[]",'
+        ;;
+
+  q|Q)
 
         echo -e "\n\t \e[1;31m Bye! \e[0m \n"
 
